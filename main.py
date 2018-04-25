@@ -2,15 +2,25 @@ import wget
 import os
 from pipes import quote 
 
+
+year = "2017"
+month = "11"
+from_date = "1"
+to_date = "31" #Dont worry about month having 30 days, script wont break, we still would get a dummy file
+mongo_db = "micromort"
+mongo_collection = "tweets"
+
+
 def download():
-    for month in range(11,12+1):
-        for date in range(0,31+1):
-            if(date < 10):
-                date = '0' + str(date)
-            url = "https://archive.org/download/archiveteam-twitter-stream-2017-11/twitter-stream-2017-{}-{}.tar".format(month, date)
-            print url
-            file_name = wget.download(url)
-            print file_name
+
+    
+    for date in range(from_date, to_date+1):
+        if(date < 10):
+            date = '0' + str(date)
+        url = "https://archive.org/download/archiveteam-twitter-stream-2017-11/twitter-stream-{}-{}-{}.tar".format(year, month, date)
+        print url
+        file_name = wget.download(url)
+        print file_name
 
 
 def extract_tar():
@@ -23,7 +33,7 @@ def extract_tar():
             os.system("tar -xvf " + pa)
 
 def extract():
-    root_dir = os.getcwd() + "/2017/"
+    root_dir = os.getcwd() + "/{}/".format(year)
 
     for month_dir in [item for item in os.listdir(root_dir) if not os.path.isfile(os.path.join(root_dir, item))]:
         
@@ -48,7 +58,7 @@ def extract():
 
 
 def dump():
-    root_dir = os.getcwd() + "/2017/"
+    root_dir = os.getcwd() + "/{}/".format(year)
 
     for month_dir in [item for item in os.listdir(root_dir) if not os.path.isfile(os.path.join(root_dir, item))]:
         
@@ -69,27 +79,7 @@ def dump():
                     if zipped_file.endswith(".json"):
                         zipped_file_path = os.path.join(time_dir_path, zipped_file)
                         print "Dumping: " + zipped_file_path
-                        os.system("mongoimport --db micromort --collection tweets " + zipped_file_path)      
-
-
-def dump_old():
-    root_dir = os.getcwd()
-    dirs = [item for item in os.listdir(root_dir) if not os.path.isfile(os.path.join(root_dir, item))]
-
-    for dir_path in dirs:
-        path = root_dir + "/" + dir_path
-        path += "/" + os.listdir(path)[0]
-        path += "/" + os.listdir(path)[0]
-        inner_dirs = [item for item in os.listdir(path) if not os.path.isfile(os.path.join(path, item))]
-
-        for inner_dir in inner_dirs:
-
-            json_files = [item for item in os.listdir(path + "/" + inner_dir) if os.path.isfile(os.path.join(path + "/" + inner_dir, item))]
-            for json_file in json_files:
-                if json_file.endswith('.json'):
-                    pa =  quote(path + "/" + inner_dir + "/" + json_file)
-                    print "dumping: " + pa
-                    os.system("mongoimport --db micromort --collection tweets " + pa)
+                        os.system("mongoimport --db {} --collection {} ".format(mongo_db, mongo_collection) + zipped_file_path)      
 
 download()   
 extract_tar()
